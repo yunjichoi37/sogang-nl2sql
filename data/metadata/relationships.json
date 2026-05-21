@@ -1,0 +1,86 @@
+[
+    {
+        "from_table": "course",
+        "from_col": "dept_name",
+        "to_table": "department",
+        "to_col": "dept_name",
+        "note": "N:1 - 강좌의 개설 학과"
+    },
+    {
+        "from_table": "instructor",
+        "from_col": "dept_name",
+        "to_table": "department",
+        "to_col": "dept_name",
+        "note": "N:1 - 교수의 소속 학과"
+    },
+    {
+        "from_table": "student",
+        "from_col": "dept_name",
+        "to_table": "department",
+        "to_col": "dept_name",
+        "note": "N:1 - 학생의 소속 학과"
+    },
+    {
+        "from_table": "section",
+        "from_col": "course_id",
+        "to_table": "course",
+        "to_col": "course_id",
+        "note": "N:1 - 분반의 강좌 정보"
+    },
+    {
+        "from_table": "section",
+        "from_col": "building",
+        "to_table": "classroom",
+        "to_col": "building",
+        "note": "N:1 - 분반의 강의실 정보 (building + room_number 복합 FK)"
+    },
+    {
+        "from_table": "teaches",
+        "from_col": "ID",
+        "to_table": "instructor",
+        "to_col": "ID",
+        "note": "N:1 - 담당 교수 정보"
+    },
+    {
+        "from_table": "teaches",
+        "from_col": "course_id",
+        "to_table": "section",
+        "to_col": "course_id",
+        "note": "N:1 - 담당 분반 정보 (course_id, sec_id, semester, year 복합 FK)"
+    },
+    {
+        "from_table": "takes",
+        "from_col": "ID",
+        "to_table": "student",
+        "to_col": "ID",
+        "note": "N:1 - 수강 학생 정보"
+    },
+    {
+        "from_table": "takes",
+        "from_col": "course_id",
+        "to_table": "section",
+        "to_col": "course_id",
+        "note": "N:1 - 수강 분반 정보 (course_id, sec_id, semester, year 복합 FK)"
+    },
+    {
+        "from_table": "advisor",
+        "from_col": "s_ID",
+        "to_table": "student",
+        "to_col": "ID",
+        "note": "1:1 - 학생의 지도교수 배정"
+    },
+    {
+        "from_table": "advisor",
+        "from_col": "i_ID",
+        "to_table": "instructor",
+        "to_col": "ID",
+        "note": "N:1 - 지도교수 정보"
+    },
+    {
+        "from_table": "prereq",
+        "from_col": "course_id",
+        "to_table": "course",
+        "to_col": "course_id",
+        "note": "N:1 - 선수과목 관계 (course_id → prereq_id)"
+    }
+]

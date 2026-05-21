@@ -1,0 +1,11 @@
+{
+    "summary": "강의실 기본 정보",
+    "description": "대학 내 강의실의 건물명, 호실 번호, 수용 인원 관리",
+    "columns": {
+        "building": "Label: 건물명 | Type: TEXT | Desc: 강의실이 위치한 건물 이름 (PK)",
+        "room_number": "Label: 호실 | Type: TEXT | Desc: 강의실 호실 번호 (PK)",
+        "capacity": "Label: 수용인원 | Type: INTEGER | Desc: 강의실 최대 수용 가능 인원"
+    },
+    "common_filters": "building = ?, capacity >= ?",
+    "notes": "복합키(building, room_number)를 사용하여 강의실을 고유하게 식별함"
+}

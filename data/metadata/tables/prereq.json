@@ -1,0 +1,10 @@
+{
+    "summary": "교과목 선수과목 정보",
+    "description": "특정 과목을 수강하기 위해 사전에 반드시 이수해야 하는 선수과목 규칙 관리",
+    "columns": {
+        "course_id": "Label: 대상과목코드 | Type: TEXT | Desc: 후수과목 코드 (PK, course 테이블 참조)",
+        "prereq_id": "Label: 선수과목코드 | Type: TEXT | Desc: 사전에 이수해야 할 과목 코드 (PK, course 테이블 참조)"
+    },
+    "common_filters": "course_id = ?, prereq_id = ?",
+    "notes": "대상 본 과목(course_id)이 폐강/삭제되면 선수과목 매핑 데이터도 연쇄 삭제됨 (on delete cascade)"
+}

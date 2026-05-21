@@ -1,0 +1,12 @@
+{
+    "summary": "과목 기본 정보",
+    "description": "대학에서 제공하는 전체 교과목의 코드, 과목명, 개설 학과, 학점 관리",
+    "columns": {
+        "course_id": "Label: 과목코드 | Type: TEXT | Desc: 교과목 고유 식별자 (PK)",
+        "title": "Label: 과목명 | Type: TEXT | Desc: 교과목의 공식 명칭",
+        "dept_name": "Label: 개설학과 | Type: TEXT | Desc: 과목을 개설한 학과 (department 테이블 참조)",
+        "credits": "Label: 학점 | Type: INTEGER | Desc: 과목 이수 시 부여되는 학점"
+    },
+    "common_filters": "dept_name = ?, credits = ?",
+    "notes": "학점(credits)은 0보다 커야 함. 연결된 학과 데이터 삭제 시 개설학과 정보는 NULL로 처리됨 (on delete set null)"
+}

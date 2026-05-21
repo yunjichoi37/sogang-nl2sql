@@ -1,0 +1,12 @@
+{
+    "summary": "교원 기본 정보",
+    "description": "대학 내 교수 및 강사의 사번, 이름, 소속 학과, 급여 정보 관리",
+    "columns": {
+        "ID": "Label: 교원사번 | Type: TEXT | Desc: 교원 고유 식별자 (PK)",
+        "name": "Label: 이름 | Type: TEXT | Desc: 교원 성명 (Not Null)",
+        "dept_name": "Label: 소속학과 | Type: TEXT | Desc: 교원이 소속된 학과 (department 테이블 참조)",
+        "salary": "Label: 급여 | Type: REAL | Desc: 교원의 연봉 또는 급여"
+    },
+    "common_filters": "dept_name = ?, salary >= ?",
+    "notes": "급여(salary)는 29000보다 커야 함 (Check 제약조건). 소속 학과 삭제 시 해당 필드는 NULL 처리됨"
+}

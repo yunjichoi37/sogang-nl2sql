@@ -1,0 +1,12 @@
+{
+    "summary": "학생 기본 정보",
+    "description": "재학생의 학번, 이름, 소속 학과, 누적 취득 학점 관리",
+    "columns": {
+        "ID": "Label: 학번 | Type: TEXT | Desc: 학생 고유 식별자 (PK)",
+        "name": "Label: 이름 | Type: TEXT | Desc: 학생 성명 (Not Null)",
+        "dept_name": "Label: 소속학과 | Type: TEXT | Desc: 학생이 소속된 학과 (department 테이블 참조)",
+        "tot_cred": "Label: 누적취득학점 | Type: INTEGER | Desc: 현재까지 취득한 총 학점 (0 이상)"
+    },
+    "common_filters": "dept_name = ?, ID = ?",
+    "notes": "학과 정보 삭제 시 소속학과 필드는 NULL 처리됨 (on delete set null). 졸업 요건 확인 및 대상자 스크리닝 시 활용"
+}

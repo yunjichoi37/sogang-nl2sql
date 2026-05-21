@@ -1,0 +1,10 @@
+{
+    "summary": "학생별 지도교수 매핑 정보",
+    "description": "학생과 그 학생을 담당하는 지도교수 간의 매칭 관계 관리",
+    "columns": {
+        "s_ID": "Label: 학생학번 | Type: TEXT | Desc: 지도 학번 (PK, student 테이블 참조)",
+        "i_ID": "Label: 지도교수사번 | Type: TEXT | Desc: 담당 지도교수의 사번 (instructor 테이블 참조)"
+    },
+    "common_filters": "i_ID = ?, s_ID = ?",
+    "notes": "한 학생은 한 명의 지도교수만 가질 수 있음 (s_ID가 단독 PK). 학생이 자퇴/졸업 등으로 삭제되면 매핑도 삭제되나(cascade), 교수가 퇴직 등으로 삭제되면 교수 사번 필드만 NULL 처리됨(set null)"
+}

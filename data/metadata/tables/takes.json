@@ -1,0 +1,14 @@
+{
+    "summary": "학생 수강 학점 및 성적 정보",
+    "description": "학생들이 특정 연도와 학기에 수강한 과목 분반 정보와 취득한 성적 관리",
+    "columns": {
+        "ID": "Label: 학번 | Type: TEXT | Desc: 수강한 학생의 학번 (PK, student 테이블 참조)",
+        "course_id": "Label: 과목코드 | Type: TEXT | Desc: 수강 과목 코드 (PK, section 테이블 참조)",
+        "sec_id": "Label: 분반코드 | Type: TEXT | Desc: 수강 분반 번호 (PK, section 테이블 참조)",
+        "semester": "Label: 학기 | Type: TEXT | Desc: 수강 학기 (PK, section 테이블 참조)",
+        "year": "Label: 연도 | Type: INTEGER | Desc: 수강 연도 (PK, section 테이블 참조)",
+        "grade": "Label: 성적 | Type: TEXT | Desc: 해당 과목에서 취득한 학점/성적 등급 (예: A+, B)"
+    },
+    "common_filters": "ID = ?, year = ? AND semester = ?, course_id = ?",
+    "notes": "학생 레코드나 개설 분반(section) 데이터가 삭제되면 수강 이력도 자동으로 연쇄 삭제됨 (on delete cascade)"
+}

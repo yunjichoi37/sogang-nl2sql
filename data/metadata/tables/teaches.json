@@ -1,0 +1,13 @@
+{
+    "summary": "교원별 담당 강의 정보",
+    "description": "교원이 특정 연도, 학기에 어떤 과목의 분반을 담당하여 강의하는지 관리",
+    "columns": {
+        "ID": "Label: 교원사번 | Type: TEXT | Desc: 강의를 담당하는 교원 사번 (PK, instructor 테이블 참조)",
+        "course_id": "Label: 과목코드 | Type: TEXT | Desc: 담당 과목 코드 (PK, section 테이블 참조)",
+        "sec_id": "Label: 분반코드 | Type: TEXT | Desc: 담당 분반 번호 (PK, section 테이블 참조)",
+        "semester": "Label: 학기 | Type: TEXT | Desc: 담당 강의 학기 (PK, section 테이블 참조)",
+        "year": "Label: 연도 | Type: INTEGER | Desc: 담당 강의 연도 (PK, section 테이블 참조)"
+    },
+    "common_filters": "ID = ?, year = ? AND semester = ?",
+    "notes": "교원 정보가 삭제되거나 분반(section)이 삭제되면 이 매핑 데이터도 자동으로 연쇄 삭제됨 (on delete cascade)"
+}

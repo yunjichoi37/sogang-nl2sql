@@ -1,0 +1,14 @@
+{
+    "summary": "강의 시간대 정보",
+    "description": "수업이 진행되는 요일과 시작 시간, 종료 시간 등의 타임슬롯 상세 정보 관리",
+    "columns": {
+        "time_slot_id": "Label: 타임슬롯ID | Type: TEXT | Desc: 시간대 고유 식별코드 (PK)",
+        "day": "Label: 요일 | Type: TEXT | Desc: 수업 요일 (단일 문자 표현, PK)",
+        "start_hr": "Label: 시작시 | Type: INTEGER | Desc: 수업 시작 시간 (0시~23시, PK)",
+        "start_min": "Label: 시작분 | Type: INTEGER | Desc: 수업 시작 분 (0분~59분, PK)",
+        "end_hr": "Label: 종료시 | Type: INTEGER | Desc: 수업 종료 시간 (0시~23시)",
+        "end_min": "Label: 종료분 | Type: INTEGER | Desc: 수업 종료 분 (0분~59분)"
+    },
+    "common_filters": "time_slot_id = ?, day = ?",
+    "notes": "복합키를 통해 하나의 타임슬롯 ID 내에 여러 요일이나 쪼개진 교시 시간이 배치될 수 있도록 구조화됨"
+}

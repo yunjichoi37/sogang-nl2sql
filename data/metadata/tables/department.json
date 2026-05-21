@@ -1,0 +1,11 @@
+{
+    "summary": "학과 기본 정보",
+    "description": "대학 내 각 학과의 이름, 위치한 건물, 예산 정보 관리",
+    "columns": {
+        "dept_name": "Label: 학과명 | Type: TEXT | Desc: 학과 고유 이름 (PK)",
+        "building": "Label: 건물명 | Type: TEXT | Desc: 학과 소속 건물의 이름",
+        "budget": "Label: 예산 | Type: REAL | Desc: 학과 연간 운영 예산"
+    },
+    "common_filters": "building = ?",
+    "notes": "예산(budget)은 반드시 0보다 커야 함 (Check 제약조건)"
+}

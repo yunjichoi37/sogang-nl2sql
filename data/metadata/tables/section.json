@@ -1,0 +1,15 @@
+{
+    "summary": "강의 분반 정보",
+    "description": "개설된 교과목의 특정 년도, 학기별 분반, 강의 시간 및 강의실 매핑 정보 관리",
+    "columns": {
+        "course_id": "Label: 과목코드 | Type: TEXT | Desc: 개설된 교과목 코드 (PK, course 테이블 참조)",
+        "sec_id": "Label: 분반코드 | Type: TEXT | Desc: 동일 과목 내 분반 번호 (PK)",
+        "semester": "Label: 학기 | Type: TEXT | Desc: 강의 학기 (Fall, Winter, Spring, Summer) (PK)",
+        "year": "Label: 연도 | Type: INTEGER | Desc: 강의 개설 연도 (1702년~2099년 제한) (PK)",
+        "building": "Label: 건물명 | Type: TEXT | Desc: 강의실 건물 (classroom 테이블 참조)",
+        "room_number": "Label: 호실 | Type: TEXT | Desc: 강의실 호실 (classroom 테이블 참조)",
+        "time_slot_id": "Label: 타임슬롯ID | Type: TEXT | Desc: 강의 시간대 식별자"
+    },
+    "common_filters": "year = ? AND semester = ?, course_id = ?",
+    "notes": "과목이 삭제되면 해당 분반 데이터도 함께 연쇄 삭제됨 (on delete cascade). 강의실 삭제 시 강의실 정보는 NULL 처리됨"
+}
