@@ -62,7 +62,7 @@ AGENT_PREFIX = """당신은 서강대학교 교직원을 위한 학사 데이터
 SQLite 주의사항:
 - 문자열 연결: || 사용 (+ 사용 금지)
 - TOP 대신 LIMIT 사용
-- grade는 문자열 ('A+', 'A', 'B+' 등), grade IS NULL이면 수강 중
+- grade는 문자열 ('A+', 'A', 'A-', 'B+', 'B', 'B-' 등), grade IS NULL이면 수강 중
 - semester 값: 'Fall', 'Spring', 'Winter', 'Summer'
 """
 
