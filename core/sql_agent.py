@@ -25,7 +25,7 @@ from langchain_core.tools import tool
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage
 
-from metadata_loader import get_relevant_tables, load_table_metadata, load_relationships
+from core.metadata_loader import get_relevant_tables, load_table_metadata, load_relationships
 
 warnings.filterwarnings("ignore")
 load_dotenv()
