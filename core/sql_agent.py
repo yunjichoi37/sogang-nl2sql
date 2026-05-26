@@ -3,7 +3,7 @@
 Text-to-SQL 에이전트 핵심 로직
 - SQLite 연결 및 SQL 실행
 - CSV 저장
-- LLM / Agent 생성 및 실행
+- LLM / Agent 생성 및 실행 (LangGraph create_react_agent 사용)
 - 메타데이터 로딩 (metadata_loader)
 """
 
@@ -19,11 +19,10 @@ from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
+from langgraph.prebuilt import create_react_agent
 
 from core.metadata_loader import get_relevant_tables, load_table_metadata, load_relationships
 
@@ -31,7 +30,7 @@ warnings.filterwarnings("ignore")
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-DB_PATH = "data/university.db"
+DB_PATH = "data/db/sogang_university.db"
 OUTPUT_DIR = "data/query_outputs"
 MAX_ROWS_IN_CONTEXT = 10
 
@@ -141,24 +140,28 @@ def save_csv_if_needed() -> tuple[str | None, pd.DataFrame | None]:
 
 
 # ── Agent 생성 ─────────────────────────────────────────────
-def build_agent_executor(dynamic_prefix: str) -> AgentExecutor:
+def build_agent(dynamic_prefix: str):
     llm = get_llm()
     tools = [execute_sql_query]
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", dynamic_prefix),
-        ("human", "{input}"),
-        MessagesPlaceholder("agent_scratchpad"),
-    ])
-
-    agent = create_tool_calling_agent(llm, tools, prompt)
-    return AgentExecutor(
-        agent=agent,
+    agent = create_react_agent(
+        model=llm,
         tools=tools,
-        verbose=True,
-        handle_parsing_errors=True,
-        return_intermediate_steps=True,
+        prompt=dynamic_prefix,
     )
+    return agent
+
+
+def _extract_intermediate_steps(messages: list) -> list:
+    steps = []
+    for msg in messages:
+        if isinstance(msg, AIMessage) and msg.tool_calls:
+            for tc in msg.tool_calls:
+                steps.append({"tool": tc["name"], "input": tc["args"]})
+        elif isinstance(msg, ToolMessage):
+            if steps:
+                steps[-1]["output"] = msg.content
+    return steps
 
 
 # ── 차트 판단 ──────────────────────────────────────────────
@@ -208,7 +211,6 @@ type은 bar, line, pie 중 하나입니다.
 
 # ── 메인 실행 함수 ─────────────────────────────────────────
 def run_query(user_input: str, callbacks: list | None = None) -> dict:
-    """사용자 질문 처리 → 결과 dict 반환"""
     llm = get_llm()
     relevant_tables = get_relevant_tables(user_input, llm, ALL_TABLES)
     table_meta = load_table_metadata(relevant_tables)
@@ -222,17 +224,24 @@ def run_query(user_input: str, callbacks: list | None = None) -> dict:
     if rel_meta:
         dynamic_prefix += f"\n\n{rel_meta}"
 
-    agent_executor = build_agent_executor(dynamic_prefix)
+    agent = build_agent(dynamic_prefix)
 
+    invoke_input = {"messages": [HumanMessage(content=user_input)]}
     invoke_config = {}
     if callbacks:
         invoke_config["callbacks"] = callbacks
 
     try:
-        response = agent_executor.invoke({"input": user_input}, invoke_config)
-        answer = response["output"]
-        intermediate_steps = response.get("intermediate_steps", [])
+        result = agent.invoke(invoke_input, invoke_config)
 
+        messages = result.get("messages", [])
+        answer = ""
+        for msg in reversed(messages):
+            if isinstance(msg, AIMessage) and not msg.tool_calls:
+                answer = msg.content
+                break
+
+        intermediate_steps = _extract_intermediate_steps(messages)
         csv_path, df = save_csv_if_needed()
         chart_config = decide_chart(df, user_input) if df is not None else {"possible": False}
 

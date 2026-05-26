@@ -1,19 +1,16 @@
 # pages/inquiry_dashboard.py — 건의·문의 현황 탭
 import os
 import json
-from datetime import datetime
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
-SUBMISSIONS_PATH = "data/submissions.csv"
-SEED_DATA_PATH = "data/seed_submissions.json"
+SUBMISSIONS_PATH = "data/submissions/submissions.csv"
+SEED_DATA_PATH = "data/submissions/seed_submissions.json"
 
 
 # ── 시드 데이터 생성 ───────────────────────────────────────
 def _create_seed_data():
-    """시드 데이터가 없으면 자동 생성"""
     seed = [
         {"type": "건의", "category": "시설", "content": "도서관 4층 에어컨이 작동하지 않습니다.", "date": "2025-05-01"},
         {"type": "건의", "category": "시설", "content": "도서관 냉방이 너무 약해요.", "date": "2025-05-02"},
@@ -33,17 +30,15 @@ def _create_seed_data():
         {"type": "문의", "category": "학사", "content": "휴학 신청 방법을 알려주세요.", "date": "2025-05-04"},
         {"type": "문의", "category": "시설", "content": "도서관 이용 시간이 어떻게 되나요?", "date": "2025-05-05"},
     ]
-    os.makedirs("data", exist_ok=True)
+    os.makedirs("data/submissions", exist_ok=True)
     with open(SEED_DATA_PATH, "w", encoding="utf-8") as f:
         json.dump(seed, f, ensure_ascii=False, indent=2)
     return seed
 
 
 def load_submissions() -> pd.DataFrame:
-    """CSV + 시드 데이터 합쳐서 로드"""
     records = []
 
-    # 시드 데이터
     if not os.path.exists(SEED_DATA_PATH):
         _create_seed_data()
     with open(SEED_DATA_PATH, encoding="utf-8") as f:
@@ -58,7 +53,6 @@ def load_submissions() -> pd.DataFrame:
             "상태": "처리완료",
         })
 
-    # 실제 접수 데이터
     if os.path.exists(SUBMISSIONS_PATH):
         df_real = pd.read_csv(SUBMISSIONS_PATH, encoding="utf-8-sig")
         for _, row in df_real.iterrows():
@@ -75,7 +69,6 @@ def load_submissions() -> pd.DataFrame:
 
 
 def cluster_submissions(df: pd.DataFrame) -> pd.DataFrame:
-    """sentence-transformers로 유사 건의 클러스터링"""
     try:
         from sentence_transformers import SentenceTransformer
         from sklearn.cluster import KMeans
@@ -113,7 +106,7 @@ def render():
         st.info("아직 접수된 건의·문의가 없어요.")
         return
 
-    # ── 요약 지표 ────────────────────────────────────────────
+    # ── 요약 지표 ──────────────────────────────────────────
     total = len(df)
     suggestions = len(df[df["유형"] == "건의"])
     inquiries = len(df[df["유형"] == "문의"])
@@ -127,7 +120,7 @@ def render():
 
     st.divider()
 
-    # ── 차트 ─────────────────────────────────────────────────
+    # ── 차트 ──────────────────────────────────────────────
     col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
@@ -151,7 +144,7 @@ def render():
 
     st.divider()
 
-    # ── 클러스터링 ───────────────────────────────────────────
+    # ── 클러스터링 ────────────────────────────────────────
     st.markdown("#### 🔗 유사 건의 클러스터링")
 
     suggestions_df = df[df["유형"] == "건의"].copy()
@@ -173,7 +166,7 @@ def render():
 
     st.divider()
 
-    # ── 전체 목록 ────────────────────────────────────────────
+    # ── 전체 목록 ─────────────────────────────────────────
     st.markdown("#### 📄 전체 접수 목록")
     filter_type = st.multiselect(
         "유형 필터",

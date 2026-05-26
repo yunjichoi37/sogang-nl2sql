@@ -46,14 +46,6 @@ def get_relevant_tables(user_question: str, llm, all_tables: list) -> list:
 
 
 def _parse_column_line(col: str, meta_str: str) -> str:
-    """
-    JSON 컬럼 메타 문자열을 파싱해서
-    col_name(Type) | Label | Desc 형식으로 변환
-
-    저장 형식:
-      "Label: 학번 | Type: TEXT | Desc: 학생 고유 식별자 (PK)"
-      "Label: 누적취득학점 | Type: INTEGER"
-    """
     label = ""
     col_type = ""
     description = ""
@@ -67,7 +59,6 @@ def _parse_column_line(col: str, meta_str: str) -> str:
         elif part.startswith("Desc:"):
             description = part[len("Desc:"):].strip()
 
-    # col_name(Type) | Label | Desc
     parts = [f"{col}({col_type})", label]
     if description:
         parts.append(description)
@@ -76,7 +67,6 @@ def _parse_column_line(col: str, meta_str: str) -> str:
 
 
 def load_table_metadata(relevant_tables: list) -> str:
-    """선택된 테이블의 컬럼 메타데이터 로드"""
     if not relevant_tables:
         return ""
 
@@ -110,7 +100,6 @@ def load_table_metadata(relevant_tables: list) -> str:
 
 
 def _build_graph(all_rels: list) -> dict:
-    """관계 리스트로 양방향 인접 그래프 구성"""
     graph = {}
     for r in all_rels:
         frm, to = r["from_table"], r["to_table"]
@@ -120,10 +109,6 @@ def _build_graph(all_rels: list) -> dict:
 
 
 def _find_join_path_bfs(start_tables: list, all_rels: list, max_hops: int = 2) -> list:
-    """
-    선택된 테이블들 사이의 연결 경로를 BFS로 탐색
-    직접 연결이 없을 때 보완용
-    """
     graph = _build_graph(all_rels)
     target_set = set(start_tables)
     visited_rel_keys = set()
@@ -157,7 +142,6 @@ def _find_join_path_bfs(start_tables: list, all_rels: list, max_hops: int = 2) -
 
 
 def load_relationships(relevant_tables: list) -> str:
-    """선택된 테이블 간 JOIN 관계 로드"""
     if not RELATIONSHIPS_PATH.exists() or not relevant_tables:
         return ""
 
@@ -166,7 +150,6 @@ def load_relationships(relevant_tables: list) -> str:
 
     relevant_set = set(relevant_tables)
 
-    # 1순위: 직접 연결
     filtered = [
         r for r in all_rels
         if r.get("from_table") in relevant_set
@@ -174,7 +157,6 @@ def load_relationships(relevant_tables: list) -> str:
         and r.get("from_table") != r.get("to_table")
     ]
 
-    # 직접 연결 없으면 BFS
     if not filtered:
         print("[관계 탐색] 직접 연결 없음 → BFS 보완 (max_hops=2)")
         filtered = _find_join_path_bfs(relevant_tables, all_rels, max_hops=2)

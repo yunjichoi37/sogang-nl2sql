@@ -1,7 +1,6 @@
 # pages/data_query.py — 데이터 조회 탭
 import pandas as pd
 import streamlit as st
-from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 
 from core.sql_agent import run_query
 
@@ -30,11 +29,8 @@ def render():
             st.write(user_input)
 
         with st.chat_message("assistant"):
-            st_callback = StreamlitCallbackHandler(
-                st.container(), expand_new_thoughts=True
-            )
             with st.spinner("분석 중..."):
-                result = run_query(user_input, callbacks=[st_callback])
+                result = run_query(user_input)
 
             if "error" in result:
                 st.error(f"오류 발생: {result['error']}")
@@ -55,9 +51,9 @@ def render():
             # Agent 사고 흐름
             if result["intermediate_steps"]:
                 with st.expander("🔍 Agent 사고 흐름", expanded=False):
-                    for action, observation in result["intermediate_steps"]:
-                        st.markdown(f"**SQL:** `{action.tool_input}`")
-                        st.markdown(f"**결과:** {observation}")
+                    for step in result["intermediate_steps"]:
+                        st.markdown(f"**SQL:** `{step.get('input', {}).get('sql_query', step.get('input', ''))}`")
+                        st.markdown(f"**결과:** {step.get('output', '')}")
                         st.divider()
 
             # 답변
@@ -109,9 +105,9 @@ def _render_message(msg: dict):
 
         if msg.get("intermediate_steps"):
             with st.expander("🔍 Agent 사고 흐름", expanded=False):
-                for action, observation in msg["intermediate_steps"]:
-                    st.markdown(f"**SQL:** `{action.tool_input}`")
-                    st.markdown(f"**결과:** {observation}")
+                for step in msg["intermediate_steps"]:
+                    st.markdown(f"**SQL:** `{step.get('input', {}).get('sql_query', step.get('input', ''))}`")
+                    st.markdown(f"**결과:** {step.get('output', '')}")
                     st.divider()
 
         st.write(msg["content"])
