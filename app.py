@@ -3,13 +3,13 @@ import streamlit as st
 
 st.set_page_config(
     page_title="서강대 교직원 AI 플랫폼",
-    page_icon="",
+    page_icon="🏫",
     layout="wide",
 )
 
 # ── 사이드바 ───────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("##서강대\n### 교직원 AI 플랫폼")
+    st.markdown("## 🏫 서강대\n### 교직원 AI 플랫폼")
     st.divider()
 
     menu = st.radio(
