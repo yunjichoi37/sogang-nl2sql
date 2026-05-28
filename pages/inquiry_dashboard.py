@@ -1,4 +1,4 @@
-# pages/inquiry_dashboard.py — 건의·문의 현황 탭
+# pages/inquiry_dashboard.py
 import os
 import json
 
@@ -96,7 +96,7 @@ def cluster_submissions(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def render():
-    st.markdown("## 📋 건의·문의 현황")
+    st.markdown("## 문의·건의 현황")
     st.caption("접수된 건의·문의를 분석하고 부서별로 현황을 확인하세요.")
     st.divider()
 
@@ -124,7 +124,7 @@ def render():
     col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
-        st.markdown("#### 카테고리별 건의·문의 건수")
+        st.markdown("#### 카테고리별 문의·건의 건수")
         cat_counts = df.groupby(["카테고리", "유형"]).size().reset_index(name="건수")
         if not cat_counts.empty:
             pivot = cat_counts.pivot(index="카테고리", columns="유형", values="건수").fillna(0)

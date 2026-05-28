@@ -6,23 +6,18 @@ from core.sql_agent import run_query
 
 
 def render():
-    st.markdown("## 📊 데이터 조회")
+    st.markdown("## 데이터 조회")
     st.caption("자연어로 학사 DB를 조회하세요.")
     st.divider()
 
-    # 세션 초기화
     if "query_messages" not in st.session_state:
         st.session_state.query_messages = [
             {"role": "assistant", "content": "안녕하세요! 학사 데이터베이스에 대해 무엇이든 질문해 주세요.\n\n예시: '컴퓨터공학과 학생이 몇 명이야?', '학과별 평균 학점을 보여줘'"}
         ]
-    if "last_df" not in st.session_state:
-        st.session_state.last_df = None
 
-    # 대화 기록 렌더링
     for msg in st.session_state.query_messages:
         _render_message(msg)
 
-    # 입력
     if user_input := st.chat_input("질문을 입력하세요..."):
         st.session_state.query_messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
@@ -40,7 +35,6 @@ def render():
                 })
                 return
 
-            # 메타데이터 토글
             if result["relevant_tables"]:
                 with st.expander(f"📌 참조 테이블: {', '.join(result['relevant_tables'])}", expanded=False):
                     if result["table_meta"]:
@@ -48,7 +42,6 @@ def render():
                     if result["rel_meta"]:
                         st.markdown(result["rel_meta"])
 
-            # Agent 사고 흐름
             if result["intermediate_steps"]:
                 with st.expander("🔍 Agent 사고 흐름", expanded=False):
                     for step in result["intermediate_steps"]:
@@ -56,28 +49,14 @@ def render():
                         st.markdown(f"**결과:** {step.get('output', '')}")
                         st.divider()
 
-            # 답변
             st.write(result["answer"])
 
-            # 데이터프레임
             if result["csv_path"]:
-                df = result["df"]
                 st.success(f"📁 CSV 저장됨: `{result['csv_path']}`")
-                st.dataframe(df, use_container_width=True)
-                st.session_state.last_df = df  # 메시지 발송 탭에서 활용
+                st.dataframe(result["df"], use_container_width=True)
 
-            # 차트
             _render_chart(result)
 
-            # 메시지 발송 연결 버튼
-            if result["df"] is not None and len(result["df"]) > 0:
-                st.divider()
-                if st.button("✉️ 이 학생들에게 카카오워크 메시지 보내기", type="secondary"):
-                    st.session_state.last_df = result["df"]
-                    st.session_state["_nav"] = "💬 메시지 발송"
-                    st.rerun()
-
-            # 세션 저장
             st.session_state.query_messages.append({
                 "role": "assistant",
                 "content": result["answer"],
@@ -88,10 +67,6 @@ def render():
                 "intermediate_steps": result.get("intermediate_steps", []),
                 "chart_config": result.get("chart_config", {"possible": False}),
             })
-
-    # 네비게이션 처리 (메시지 발송 버튼 클릭 시)
-    if st.session_state.get("_nav"):
-        st.session_state["_nav"] = None
 
 
 def _render_message(msg: dict):
