@@ -97,13 +97,13 @@ def cluster_submissions(df: pd.DataFrame) -> pd.DataFrame:
 
 def render():
     st.markdown("## 문의·건의 현황")
-    st.caption("접수된 건의·문의를 분석하고 부서별로 현황을 확인하세요.")
+    st.caption("접수된 문의·건의를 분석하고 부서별로 현황을 확인하세요.")
     st.divider()
 
     df = load_submissions()
 
     if df.empty:
-        st.info("아직 접수된 건의·문의가 없어요.")
+        st.info("아직 접수된 문의·건의가 없어요.")
         return
 
     # ── 요약 지표 ──────────────────────────────────────────
