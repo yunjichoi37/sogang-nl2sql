@@ -1,70 +1,18 @@
 # pages/inquiry_dashboard.py
-import os
 import json
+import os
 
 import pandas as pd
 import streamlit as st
 
-SUBMISSIONS_PATH = "data/submissions/submissions.csv"
-SEED_DATA_PATH = "data/submissions/seed_submissions.json"
-
-
-# ── 시드 데이터 생성 ───────────────────────────────────────
-def _create_seed_data():
-    seed = [
-        {"type": "건의", "category": "시설", "content": "도서관 4층 에어컨이 작동하지 않습니다.", "date": "2025-05-01"},
-        {"type": "건의", "category": "시설", "content": "도서관 냉방이 너무 약해요.", "date": "2025-05-02"},
-        {"type": "건의", "category": "시설", "content": "도서관 에어컨 고장으로 공부하기 힘듭니다.", "date": "2025-05-03"},
-        {"type": "건의", "category": "시설", "content": "R관 엘리베이터가 자주 고장납니다.", "date": "2025-05-04"},
-        {"type": "건의", "category": "시설", "content": "화장실 세면대 수도꼭지가 고장났어요.", "date": "2025-05-05"},
-        {"type": "건의", "category": "시설", "content": "강의실 조명이 너무 어둡습니다.", "date": "2025-05-06"},
-        {"type": "건의", "category": "시스템", "content": "수강신청 페이지가 느립니다.", "date": "2025-05-01"},
-        {"type": "건의", "category": "시스템", "content": "포털 로그인이 자꾸 튕겨요.", "date": "2025-05-02"},
-        {"type": "건의", "category": "시스템", "content": "수강신청 시 오류가 발생합니다.", "date": "2025-05-03"},
-        {"type": "건의", "category": "학생생활", "content": "기숙사 식단이 다양하지 않아요.", "date": "2025-05-01"},
-        {"type": "건의", "category": "학생생활", "content": "동아리방 공간이 부족합니다.", "date": "2025-05-04"},
-        {"type": "건의", "category": "학사", "content": "수강정정 기간을 늘려주세요.", "date": "2025-05-05"},
-        {"type": "문의", "category": "장학", "content": "국가장학금 신청 기간이 언제인가요?", "date": "2025-05-01"},
-        {"type": "문의", "category": "장학", "content": "성적 장학금 기준이 어떻게 되나요?", "date": "2025-05-02"},
-        {"type": "문의", "category": "학사", "content": "졸업 학점이 몇 점인가요?", "date": "2025-05-03"},
-        {"type": "문의", "category": "학사", "content": "휴학 신청 방법을 알려주세요.", "date": "2025-05-04"},
-        {"type": "문의", "category": "시설", "content": "도서관 이용 시간이 어떻게 되나요?", "date": "2025-05-05"},
-    ]
-    os.makedirs("data/submissions", exist_ok=True)
-    with open(SEED_DATA_PATH, "w", encoding="utf-8") as f:
-        json.dump(seed, f, ensure_ascii=False, indent=2)
-    return seed
+SUBMISSIONS_PATH = "data/submissions/submissions.json"
 
 
 def load_submissions() -> pd.DataFrame:
-    records = []
-
-    if not os.path.exists(SEED_DATA_PATH):
-        _create_seed_data()
-    with open(SEED_DATA_PATH, encoding="utf-8") as f:
-        seeds = json.load(f)
-    for s in seeds:
-        records.append({
-            "접수번호": f"SEED-{len(records)+1:04d}",
-            "유형": s["type"],
-            "카테고리": s["category"],
-            "내용": s["content"],
-            "접수일": s["date"],
-            "상태": "처리완료",
-        })
-
-    if os.path.exists(SUBMISSIONS_PATH):
-        df_real = pd.read_csv(SUBMISSIONS_PATH, encoding="utf-8-sig")
-        for _, row in df_real.iterrows():
-            records.append({
-                "접수번호": row.get("접수번호", "-"),
-                "유형": row.get("유형", "-"),
-                "카테고리": row.get("카테고리", "기타"),
-                "내용": row.get("내용", ""),
-                "접수일": row.get("접수일", ""),
-                "상태": row.get("상태", "접수완료"),
-            })
-
+    if not os.path.exists(SUBMISSIONS_PATH):
+        return pd.DataFrame(columns=["접수번호", "유형", "카테고리", "내용", "접수일", "상태"])
+    with open(SUBMISSIONS_PATH, encoding="utf-8") as f:
+        records = json.load(f)
     return pd.DataFrame(records)
 
 
@@ -97,13 +45,13 @@ def cluster_submissions(df: pd.DataFrame) -> pd.DataFrame:
 
 def render():
     st.markdown("## 문의·건의 현황")
-    st.caption("접수된 문의·건의를 분석하고 부서별로 현황을 확인하세요.")
+    st.caption("접수된 건의·문의를 분석하고 부서별로 현황을 확인하세요.")
     st.divider()
 
     df = load_submissions()
 
     if df.empty:
-        st.info("아직 접수된 문의·건의가 없어요.")
+        st.info("아직 접수된 건의·문의가 없어요.")
         return
 
     # ── 요약 지표 ──────────────────────────────────────────
@@ -146,7 +94,6 @@ def render():
 
     # ── 클러스터링 ────────────────────────────────────────
     st.markdown("#### 🔗 유사 건의 클러스터링")
-
     suggestions_df = df[df["유형"] == "건의"].copy()
     if len(suggestions_df) >= 3:
         with st.spinner("유사 건의 분석 중..."):

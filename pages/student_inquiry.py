@@ -1,14 +1,14 @@
 # pages/student_inquiry.py — 학생용 문의·건의 접수 페이지
 import os
-import csv
+import json
 import uuid
-from datetime import date
+from datetime import datetime
 
 import streamlit as st
 
 from core.classifier import classify, get_ai_response
 
-SUBMISSIONS_PATH = "data/submissions/submissions.csv"
+SUBMISSIONS_PATH = "data/submissions/submissions.json"
 SUBMISSIONS_DIR = "data/submissions"
 
 CATEGORY_DEPT = {
@@ -22,25 +22,32 @@ CATEGORY_DEPT = {
 }
 
 
-# ── CSV 저장 ────────────────────────────────────────────────
+# ── JSON 저장 ────────────────────────────────────────────────
 def _save_submission(inquiry_type: str, category: str, content: str) -> str:
     os.makedirs(SUBMISSIONS_DIR, exist_ok=True)
     receipt_no = f"REQ-{uuid.uuid4().hex[:6].upper()}"
-    today = date.today().isoformat()
-    file_exists = os.path.exists(SUBMISSIONS_PATH)
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    with open(SUBMISSIONS_PATH, "a", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=["접수번호", "유형", "카테고리", "내용", "접수일", "상태"])
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow({
-            "접수번호": receipt_no,
-            "유형": inquiry_type,
-            "카테고리": category,
-            "내용": content,
-            "접수일": today,
-            "상태": "접수완료",
-        })
+    # 기존 데이터 로드
+    if os.path.exists(SUBMISSIONS_PATH):
+        with open(SUBMISSIONS_PATH, encoding="utf-8") as f:
+            records = json.load(f)
+    else:
+        records = []
+
+    # 신규 항목 추가
+    records.append({
+        "접수번호": receipt_no,
+        "유형": inquiry_type,
+        "카테고리": category,
+        "내용": content,
+        "접수일": now,
+        "상태": "접수완료",
+    })
+
+    with open(SUBMISSIONS_PATH, "w", encoding="utf-8") as f:
+        json.dump(records, f, ensure_ascii=False, indent=2)
+
     return receipt_no
 
 
@@ -99,7 +106,7 @@ def render():
             col2.metric("담당 부서", dept)
             col3.metric("처리 예정", "3~5 영업일")
 
-        st.info(f"📬 **{dept}**에서 검토 후 처리해 드릴게요. 접수번호를 기억해 두세요!")
+        st.info(f"📬 **{dept}**에서 검토 후 처리해 드릴게요. 접수번호를 확인해주세요.")
 
         if st.button("새 문의·건의 작성", type="primary"):
             _reset_state()
