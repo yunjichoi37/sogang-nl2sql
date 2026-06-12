@@ -1,8 +1,11 @@
 # pages/data_query.py — 데이터 조회 탭
+import io
+from datetime import datetime
+
 import pandas as pd
 import streamlit as st
 
-from core.sql_agent import run_query
+from core.sql_agent import run_query_stream
 
 
 def render():
@@ -24,8 +27,8 @@ def render():
             st.write(user_input)
 
         with st.chat_message("assistant"):
-            with st.spinner("분석 중..."):
-                result = run_query(user_input)
+            result = {}
+            answer = st.write_stream(run_query_stream(user_input, result))
 
             if "error" in result:
                 st.error(f"오류 발생: {result['error']}")
@@ -35,32 +38,41 @@ def render():
                 })
                 return
 
-            if result["relevant_tables"]:
+            if result.get("relevant_tables"):
                 with st.expander(f"📌 참조 테이블: {', '.join(result['relevant_tables'])}", expanded=False):
-                    if result["table_meta"]:
+                    if result.get("table_meta"):
                         st.code(result["table_meta"])
-                    if result["rel_meta"]:
+                    if result.get("rel_meta"):
                         st.markdown(result["rel_meta"])
 
-            if result["intermediate_steps"]:
+            if result.get("intermediate_steps"):
                 with st.expander("🔍 Agent 사고 흐름", expanded=False):
                     for step in result["intermediate_steps"]:
                         st.markdown(f"**SQL:** `{step.get('input', {}).get('sql_query', step.get('input', ''))}`")
                         st.markdown(f"**결과:** {step.get('output', '')}")
                         st.divider()
 
-            st.write(result["answer"])
-
-            if result["csv_path"]:
-                st.success(f"📁 CSV 저장됨: `{result['csv_path']}`")
+            csv_str = None
+            csv_filename = None
+            if result.get("df") is not None:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                csv_str = result["df"].to_csv(index=False, encoding="utf-8-sig")
+                csv_filename = f"result_{timestamp}.csv"
                 st.dataframe(result["df"], use_container_width=True)
+                st.download_button(
+                    label="CSV 다운로드",
+                    data=csv_str,
+                    file_name=csv_filename,
+                    mime="text/csv",
+                )
 
             _render_chart(result)
 
             st.session_state.query_messages.append({
                 "role": "assistant",
-                "content": result["answer"],
-                "csv_path": result.get("csv_path"),
+                "content": answer,
+                "csv_str": csv_str,
+                "csv_filename": csv_filename,
                 "relevant_tables": result.get("relevant_tables", []),
                 "table_meta": result.get("table_meta", ""),
                 "rel_meta": result.get("rel_meta", ""),
@@ -87,10 +99,17 @@ def _render_message(msg: dict):
 
         st.write(msg["content"])
 
-        if msg.get("csv_path"):
+        if msg.get("csv_str"):
             try:
-                df = pd.read_csv(msg["csv_path"])
+                df = pd.read_csv(io.StringIO(msg["csv_str"]))
                 st.dataframe(df, use_container_width=True)
+                st.download_button(
+                    label="CSV 다운로드",
+                    data=msg["csv_str"],
+                    file_name=msg.get("csv_filename", "result.csv"),
+                    mime="text/csv",
+                    key=f"dl_{msg.get('csv_filename', 'result')}",
+                )
             except Exception:
                 pass
 
@@ -103,9 +122,9 @@ def _render_chart(data: dict):
         return
 
     df = data.get("df")
-    if df is None and data.get("csv_path"):
+    if df is None and data.get("csv_str"):
         try:
-            df = pd.read_csv(data["csv_path"])
+            df = pd.read_csv(io.StringIO(data["csv_str"]))
         except Exception:
             return
     if df is None:

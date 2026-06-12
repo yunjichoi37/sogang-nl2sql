@@ -20,7 +20,7 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_core.tools import tool
-from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk, ToolMessage
 from langchain_google_vertexai import ChatVertexAI
 from langgraph.prebuilt import create_react_agent
 
@@ -361,7 +361,7 @@ def run_query(user_input: str, callbacks: list | None = None) -> dict:
         invoke_config["callbacks"] = callbacks
 
     try:
-        result = agent.invoke(invoke_input, invoke_config)
+        result = agent.invoke(invoke_input, {**invoke_config, "recursion_limit": 10})
 
         messages = result.get("messages", [])
         answer = ""
@@ -398,3 +398,78 @@ def run_query(user_input: str, callbacks: list | None = None) -> dict:
             "intermediate_steps": [],
             "error": str(e),
         }
+
+
+def run_query_stream(user_input: str, result_container: dict, callbacks: list | None = None):
+    """텍스트 청크를 yield하며 스트리밍. 완료 후 result_container에 메타데이터를 채운다."""
+    llm = get_llm()
+    relevant_tables = get_relevant_tables(user_input, llm, ALL_TABLES)
+    table_meta = load_table_metadata(relevant_tables)
+    rel_meta = load_relationships(relevant_tables)
+
+    print(f"[테이블] {relevant_tables}")
+
+    dynamic_prefix = AGENT_PREFIX
+    if table_meta:
+        dynamic_prefix += f"\n\n=== 테이블 메타데이터 ===\n{table_meta}"
+    if rel_meta:
+        dynamic_prefix += f"\n\n{rel_meta}"
+
+    agent = build_agent(dynamic_prefix)
+    invoke_input = {"messages": [HumanMessage(content=user_input)]}
+    invoke_config: dict = {"recursion_limit": 10}
+    if callbacks:
+        invoke_config["callbacks"] = callbacks
+
+    intermediate_steps = []
+    current_tool: dict | None = None
+    current_tool_args = ""
+
+    try:
+        for chunk, _ in agent.stream(invoke_input, invoke_config, stream_mode="messages"):
+            if isinstance(chunk, AIMessageChunk):
+                if chunk.tool_call_chunks:
+                    for tc in chunk.tool_call_chunks:
+                        if tc.get("name"):
+                            current_tool = {"tool": tc["name"], "input": {}}
+                            current_tool_args = ""
+                        if tc.get("args"):
+                            current_tool_args += tc["args"]
+                elif chunk.content:
+                    yield chunk.content
+
+            elif isinstance(chunk, ToolMessage) and current_tool is not None:
+                try:
+                    current_tool["input"] = json.loads(current_tool_args)
+                except Exception:
+                    current_tool["input"] = {"sql_query": current_tool_args}
+                current_tool["output"] = chunk.content
+                intermediate_steps.append(current_tool)
+                current_tool = None
+                current_tool_args = ""
+
+        csv_path, df = save_csv_if_needed()
+        chart_config = decide_chart(df, user_input) if df is not None else {"possible": False}
+
+        result_container.update({
+            "csv_path": csv_path,
+            "df": df,
+            "chart_config": chart_config,
+            "relevant_tables": relevant_tables,
+            "table_meta": table_meta,
+            "rel_meta": rel_meta,
+            "intermediate_steps": intermediate_steps,
+        })
+
+    except Exception as e:
+        last_query_results["data"] = None
+        result_container.update({
+            "error": str(e),
+            "csv_path": None,
+            "df": None,
+            "chart_config": {"possible": False},
+            "relevant_tables": relevant_tables,
+            "table_meta": table_meta,
+            "rel_meta": rel_meta,
+            "intermediate_steps": intermediate_steps,
+        })
