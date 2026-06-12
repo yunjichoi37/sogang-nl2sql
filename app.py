@@ -3,7 +3,6 @@ import streamlit as st
 
 st.set_page_config(
     page_title="서강대학교 교직원 AI 에이전트",
-    page_icon="🏫",
     layout="wide",
 )
 
