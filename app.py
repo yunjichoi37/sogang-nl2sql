@@ -10,7 +10,7 @@ st.markdown("""
     <style>
     [data-testid="stSidebarNav"] { display: none; }
 
-    /* 사이드바 버튼 스타일 — 라디오처럼 보이게 */
+    /* 사이드바 버튼 스타일 — 라디오처럼 보이게 */W
     div[data-testid="stSidebar"] .stButton button {
         background: none;
         border: none;
@@ -31,11 +31,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ── 현재 페이지 세션 초기화 ────────────────────────────────
+# 현재 페이지 세션 초기화
 if "current_page" not in st.session_state:
     st.session_state.current_page = "데이터 조회"
 
-# ── 사이드바 ───────────────────────────────────────────────
+# 사이드바
 with st.sidebar:
     st.markdown("## 서강대학교\n교직원용 AI 에이전트")
     st.divider()
@@ -55,7 +55,7 @@ with st.sidebar:
     st.caption("Powered by Groq · LLaMA 3.3")
     st.caption("서강대학교 생성형 AI 공모전")
 
-# ── 페이지 라우팅 ──────────────────────────────────────────
+# 페이지 라우팅
 page = st.session_state.current_page
 
 if page == "데이터 조회":

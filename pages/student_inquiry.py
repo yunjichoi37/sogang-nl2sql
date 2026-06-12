@@ -22,7 +22,7 @@ CATEGORY_DEPT = {
 }
 
 
-# ── JSON 저장 ────────────────────────────────────────────────
+# JSON 저장
 def _save_submission(inquiry_type: str, category: str, content: str) -> str:
     os.makedirs(SUBMISSIONS_DIR, exist_ok=True)
     receipt_no = f"REQ-{uuid.uuid4().hex[:6].upper()}"
@@ -51,7 +51,7 @@ def _save_submission(inquiry_type: str, category: str, content: str) -> str:
     return receipt_no
 
 
-# ── 배지 ────────────────────────────────────────────────────
+# 배지
 def _badge(inquiry_type: str | None, category: str | None) -> str | None:
     if not inquiry_type:
         return None
@@ -60,7 +60,7 @@ def _badge(inquiry_type: str | None, category: str | None) -> str | None:
     return f"{emoji} {inquiry_type}{cat}"
 
 
-# ── 세션 초기화 ─────────────────────────────────────────────
+# 세션 초기화
 def _init_state():
     if "inq_messages" not in st.session_state:
         st.session_state.inq_messages = []
@@ -85,7 +85,7 @@ def _reset_state():
     st.session_state.inq_receipt_no = None
 
 
-# ── 메인 렌더 ───────────────────────────────────────────────
+# 메인 렌더
 def render():
     st.markdown("## 문의·건의 접수")
     st.caption("궁금한 점이나 불편한 점을 자유롭게 말씀해 주세요. AI가 도와드릴게요.")
@@ -93,7 +93,7 @@ def render():
 
     _init_state()
 
-    # ── 접수 완료 화면 ──────────────────────────────────────
+    # 접수 완료 화면
     if st.session_state.inq_submitted:
         receipt_no = st.session_state.inq_receipt_no
         classify_result = st.session_state.inq_classify
@@ -113,13 +113,13 @@ def render():
             st.rerun()
         return
 
-    # ── 분류 배지 ───────────────────────────────────────────
+    # 분류 배지
     classify_result = st.session_state.inq_classify
     badge = _badge(classify_result.get("type"), classify_result.get("category"))
     if badge:
         st.markdown(f"**현재 분류:** {badge}")
 
-    # ── 대화 기록 렌더링 ────────────────────────────────────
+    # 대화 기록 렌더링
     if not st.session_state.inq_messages:
         with st.chat_message("assistant"):
             st.write("안녕하세요! 학교 생활 중 불편한 점이나 궁금한 점을 말씀해 주세요. 문의·건의 접수를 도와드릴게요. 😊")
@@ -128,7 +128,7 @@ def render():
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
 
-    # ── 접수 확인 버튼 (구체화 완료된 건의일 때) ────────────
+    # 접수 확인 버튼 (구체화 완료된 건의일 때)
     cr = st.session_state.inq_classify
     show_confirm = (
         cr.get("type") == "건의"
@@ -160,7 +160,7 @@ def render():
                 ]
                 st.rerun()
 
-    # ── 채팅 입력 ───────────────────────────────────────────
+    # 채팅 입력
     if user_input := st.chat_input("내용을 입력하세요..."):
         st.session_state.inq_messages.append({"role": "user", "content": user_input})
         with st.chat_message("user"):

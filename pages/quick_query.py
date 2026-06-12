@@ -147,7 +147,7 @@ def render():
     if "quick_result" not in st.session_state:
         st.session_state.quick_result = None
 
-    # ── 버튼 나열 ──────────────────────────────────────────
+    # 버튼 나열
     cols = st.columns(len(TEMPLATES))
     for i, tpl in enumerate(TEMPLATES):
         with cols[i]:
@@ -162,7 +162,7 @@ def render():
                 st.session_state.quick_result = None
                 st.rerun()
 
-    # ── 파라미터 폼 ────────────────────────────────────────
+    # 파라미터 폼
     active = st.session_state.active_template
     if active is not None:
         tpl = TEMPLATES[active]
@@ -204,7 +204,7 @@ def render():
                         }
                     st.rerun()
 
-    # ── 결과 표시 ──────────────────────────────────────────
+    # 결과 표시
     result = st.session_state.get("quick_result")
     if result:
         st.divider()

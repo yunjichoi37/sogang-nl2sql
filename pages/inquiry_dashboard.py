@@ -54,7 +54,7 @@ def render():
         st.info("아직 접수된 문의·건의가 없어요.")
         return
 
-    # ── 요약 지표 ──────────────────────────────────────────
+    # 요약 지표
     total = len(df)
     suggestions = len(df[df["유형"] == "건의"])
     inquiries = len(df[df["유형"] == "문의"])
@@ -68,7 +68,7 @@ def render():
 
     st.divider()
 
-    # ── 차트 ──────────────────────────────────────────────
+    # 차트
     col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
@@ -92,7 +92,7 @@ def render():
 
     st.divider()
 
-    # ── 클러스터링 ────────────────────────────────────────
+    # 클러스터링
     st.markdown("#### 🔗 유사 건의 클러스터링")
     suggestions_df = df[df["유형"] == "건의"].copy()
     if len(suggestions_df) >= 3:
@@ -113,7 +113,7 @@ def render():
 
     st.divider()
 
-    # ── 전체 목록 ─────────────────────────────────────────
+    # 전체 목록
     st.markdown("#### 📄 전체 접수 목록")
     filter_type = st.multiselect(
         "유형 필터",

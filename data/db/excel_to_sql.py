@@ -181,7 +181,7 @@ def generate_sql(df):
     lines.append("-- 자동 생성: excel_to_sql.py")
     lines.append("-- ================================================\n")
 
-    # ── 수집용 컨테이너 ──────────────────────────────
+    # 수집용 컨테이너
     classrooms   = {}
     departments  = {}
     courses      = {}
@@ -289,7 +289,7 @@ def generate_sql(df):
     for name, (inst_id, nm, dept) in instructors.items():
         dept_inst_map[dept].append(inst_id)
 
-    # ── student 생성 ─────────────────────────────────
+    # student 생성
     student_ids  = set()   # 학번은 8자리(20221234), instructor ID(5자리)와 겹칠 일 없음
     students     = []      # (id, name, dept, tot_cred)
     for _ in range(NUM_STUDENTS):
@@ -301,7 +301,7 @@ def generate_sql(df):
 
     print(f"  student {len(students)}명 생성")
 
-    # ── advisor 생성 ─────────────────────────────────
+    # advisor 생성
     # student 1명당 같은 학과 instructor 1명 (PK: s_ID)
     advisors = []
     for (sid, _, dept, _) in students:
@@ -312,7 +312,7 @@ def generate_sql(df):
 
     print(f"  advisor {len(advisors)}개 생성")
 
-    # ── takes 생성 ───────────────────────────────────
+    # takes 생성
     # (ID, course_id, sec_id, semester, year) PK 중복 방지
     takes_set  = set()
     takes_rows = []
@@ -333,7 +333,7 @@ def generate_sql(df):
 
     print(f"  takes {len(takes_rows)}개 생성 (시도 {attempts}회)")
 
-    # ── prereq 생성 ──────────────────────────────────
+    # prereq 생성
     # 같은 학과 내 과목끼리, 순환 참조 방지
     prereq_rows = []
     prereq_set  = set()   # (course_id, prereq_id)
