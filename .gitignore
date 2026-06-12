@@ -4,3 +4,4 @@
 venv/
 __pycache__/
 query_outputs/
+submissions/
