@@ -2,19 +2,39 @@
 import json
 import os
 import re
-from groq import Groq
+from langchain_google_vertexai import ChatVertexAI
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
-# ── 싱글톤 ─────────────────────────────────────────────────
-_client = None
+GCP_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 
-def get_client() -> Groq:
-    global _client
-    if _client is None:
-        _client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-    return _client
+# 싱글톤
+_llm_classify: ChatVertexAI | None = None
+_llm_chat: ChatVertexAI | None = None
+
+def _get_classify_llm() -> ChatVertexAI:
+    global _llm_classify
+    if _llm_classify is None:
+        _llm_classify = ChatVertexAI(
+            model_name="gemini-2.5-flash",
+            temperature=0,
+            max_output_tokens=256,
+            project=GCP_PROJECT,
+        )
+    return _llm_classify
+
+def _get_chat_llm() -> ChatVertexAI:
+    global _llm_chat
+    if _llm_chat is None:
+        _llm_chat = ChatVertexAI(
+            model_name="gemini-2.5-flash",
+            temperature=0.7,
+            max_output_tokens=1024,
+            project=GCP_PROJECT,
+        )
+    return _llm_chat
 
 
-# ── LLM 분류 ───────────────────────────────────────────────
+# LLM 분류
 _CLASSIFY_SYSTEM = """당신은 서강대학교 AI 도우미의 분류기입니다.
 사용자 입력을 분석해서 아래 JSON 형식으로만 답하세요. 다른 말은 절대 하지 마세요.
 
@@ -40,17 +60,12 @@ is_complete 기준 (문의):
 
 def classify(user_input: str) -> dict:
     """사용자 입력을 건의/문의로 분류"""
-    client = get_client()
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {"role": "system", "content": _CLASSIFY_SYSTEM},
-            {"role": "user", "content": f"사용자 입력: {user_input}"},
-        ],
-        temperature=0,
-        max_tokens=256,
-    )
-    raw = response.choices[0].message.content.strip()
+    llm = _get_classify_llm()
+    response = llm.invoke([
+        SystemMessage(content=_CLASSIFY_SYSTEM),
+        HumanMessage(content=f"사용자 입력: {user_input}"),
+    ])
+    raw = response.content.strip()
     raw = re.sub(r"```json|```", "", raw).strip()
     try:
         return json.loads(raw)
@@ -63,7 +78,7 @@ def classify(user_input: str) -> dict:
         }
 
 
-# ── 대화 응답 생성 ──────────────────────────────────────────
+# 대화 응답 생성
 _CHAT_SYSTEM = """당신은 서강대학교 AI 도우미입니다.
 학생의 문의·건의를 친절하게 도와주세요.
 
@@ -87,22 +102,19 @@ _CHAT_SYSTEM = """당신은 서강대학교 AI 도우미입니다.
 
 def get_ai_response(messages: list[dict], classify_result: dict) -> str:
     """분류 결과를 바탕으로 대화 응답 생성"""
-    client = get_client()
+    llm = _get_chat_llm()
     system = _CHAT_SYSTEM.format(
         inquiry_type=classify_result.get("type", "미분류"),
         category=classify_result.get("category", "기타"),
         is_complete=classify_result.get("is_complete", False),
         missing_fields=", ".join(classify_result.get("missing_fields", [])) or "없음",
     )
-    groq_messages = [{"role": "system", "content": system}]
+    lc_messages = [SystemMessage(content=system)]
     for m in messages:
-        role = "user" if m["role"] == "user" else "assistant"
-        groq_messages.append({"role": role, "content": m["content"]})
+        if m["role"] == "user":
+            lc_messages.append(HumanMessage(content=m["content"]))
+        else:
+            lc_messages.append(AIMessage(content=m["content"]))
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=groq_messages,
-        temperature=0.7,
-        max_tokens=1024,
-    )
-    return response.choices[0].message.content
+    response = llm.invoke(lc_messages)
+    return response.content

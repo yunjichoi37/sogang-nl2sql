@@ -21,7 +21,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
-from langchain_groq import ChatGroq
+from langchain_google_vertexai import ChatVertexAI
 from langgraph.prebuilt import create_react_agent
 
 from core.metadata_loader import get_relevant_tables, load_table_metadata, load_relationships
@@ -29,7 +29,7 @@ from core.metadata_loader import get_relevant_tables, load_table_metadata, load_
 warnings.filterwarnings("ignore")
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GCP_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
 DB_PATH = "data/db/sogang_university.db"
 OUTPUT_DIR = "data/query_outputs"
 MAX_ROWS_IN_CONTEXT = 10
@@ -37,7 +37,7 @@ MAX_ROWS_IN_CONTEXT = 10
 last_query_results = {"data": None}
 
 
-# ── 테이블 목록 ────────────────────────────────────────────
+# 테이블 목록 수집
 def get_all_tables() -> list[str]:
     table_files = glob.glob("data/metadata/tables/*.json")
     return [Path(f).stem for f in table_files]
@@ -45,7 +45,7 @@ def get_all_tables() -> list[str]:
 ALL_TABLES: list[str] = get_all_tables()
 
 
-# ── 프롬프트 ───────────────────────────────────────────────
+# 프롬프트
 AGENT_PREFIX = """당신은 서강대학교 교직원을 위한 학사 데이터베이스 SQL 전문가입니다.
 
 ==================================================
@@ -195,21 +195,21 @@ ORDER BY s.name;
 """
 
 
-# ── LLM 싱글톤 ─────────────────────────────────────────────
-_llm: ChatGroq | None = None
+# LLM 싱글톤
+_llm: ChatVertexAI | None = None
 
-def get_llm() -> ChatGroq:
+def get_llm() -> ChatVertexAI:
     global _llm
     if _llm is None:
-        _llm = ChatGroq(
-            api_key=GROQ_API_KEY,
-            model_name="llama-3.3-70b-versatile",
+        _llm = ChatVertexAI(
+            model_name="gemini-2.5-flash",
             temperature=0,
+            project=GCP_PROJECT,
         )
     return _llm
 
 
-# ── SQL 실행 툴 ────────────────────────────────────────────
+# SQL 실행 툴
 @tool
 def execute_sql_query(sql_query: str) -> str:
     """
@@ -248,7 +248,7 @@ def execute_sql_query(sql_query: str) -> str:
         return f"SQL 실행 에러: {e}\n이 에러를 바탕으로 쿼리를 수정해서 다시 시도하세요."
 
 
-# ── CSV 저장 ───────────────────────────────────────────────
+# CSV 저장
 def save_csv_if_needed() -> tuple[str | None, pd.DataFrame | None]:
     data = last_query_results.get("data")
     if not data:
@@ -268,7 +268,7 @@ def save_csv_if_needed() -> tuple[str | None, pd.DataFrame | None]:
     return csv_path, df
 
 
-# ── Agent 생성 ─────────────────────────────────────────────
+# Agent 생성
 def build_agent(dynamic_prefix: str):
     llm = get_llm()
     tools = [execute_sql_query]
@@ -293,7 +293,7 @@ def _extract_intermediate_steps(messages: list) -> list:
     return steps
 
 
-# ── 차트 판단 ──────────────────────────────────────────────
+# 차트 판단
 def decide_chart(df: pd.DataFrame, user_question: str) -> dict:
     if df is None or len(df) <= 1:
         return {"possible": False}
@@ -338,7 +338,7 @@ type은 bar, line, pie 중 하나입니다.
         return {"possible": False}
 
 
-# ── 메인 실행 함수 ─────────────────────────────────────────
+# 메인 실행 함수
 def run_query(user_input: str, callbacks: list | None = None) -> dict:
     llm = get_llm()
     relevant_tables = get_relevant_tables(user_input, llm, ALL_TABLES)
