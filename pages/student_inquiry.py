@@ -141,10 +141,10 @@ def render():
         col_yes, col_no = st.columns([1, 4])
         with col_yes:
             if st.button("✅ 네, 접수할게요", type="primary", use_container_width=True):
-                # 마지막 사용자 메시지를 내용으로 저장
-                content = next(
-                    (m["content"] for m in reversed(st.session_state.inq_messages) if m["role"] == "user"),
-                    ""
+                # 전체 사용자 메시지를 합쳐서 저장
+                content = "\n".join(
+                    m["content"] for m in st.session_state.inq_messages
+                    if m["role"] == "user"
                 )
                 receipt_no = _save_submission(cr["type"], cr["category"], content)
                 st.session_state.inq_receipt_no = receipt_no
@@ -168,8 +168,8 @@ def render():
 
         with st.chat_message("assistant"):
             with st.spinner("분석 중..."):
-                # 분류
-                new_classify = classify(user_input)
+                # 분류 (전체 대화 컨텍스트 전달)
+                new_classify = classify(st.session_state.inq_messages)
                 st.session_state.inq_classify.update(new_classify)
 
                 # 배지 업데이트

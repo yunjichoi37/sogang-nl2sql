@@ -58,12 +58,15 @@ is_complete 기준 (문의):
 - 무엇을 묻는지 명확하면 true
 """
 
-def classify(user_input: str) -> dict:
-    """사용자 입력을 건의/문의로 분류"""
+def classify(messages: list[dict]) -> dict:
+    """대화 전체를 보고 건의/문의로 분류"""
+    user_content = "\n".join(
+        m["content"] for m in messages if m["role"] == "user"
+    )
     llm = _get_classify_llm()
     response = llm.invoke([
         SystemMessage(content=_CLASSIFY_SYSTEM),
-        HumanMessage(content=f"사용자 입력: {user_input}"),
+        HumanMessage(content=f"사용자 입력 (전체 대화):\n{user_content}"),
     ])
     raw = response.content.strip()
     raw = re.sub(r"```json|```", "", raw).strip()
