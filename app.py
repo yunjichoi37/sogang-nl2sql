@@ -52,7 +52,7 @@ with st.sidebar:
         st.session_state.current_page = "문의·건의 접수"
 
     st.divider()
-    st.caption("Powered by Groq · LLaMA 3.3")
+    st.caption("Vertex AI Gemini 2.5 Flash")
     st.caption("서강대학교 생성형 AI 공모전")
 
 # 페이지 라우팅
